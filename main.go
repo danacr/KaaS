@@ -182,5 +182,16 @@ func terraformcluster(id string, user User) error {
 	if err != nil {
 		return err
 	}
+	ctx := context.Background()
+	client, err := firestore.NewClient(ctx, "k8stfw")
+	if err != nil {
+		return err
+	}
+	collection := client.Collection("Clusters")
+	document := collection.Doc(id)
+	wr, err := document.Create(ctx, Cluster{
+		Ready: true,
+	})
+	fmt.Println(wr)
 	return nil
 }
