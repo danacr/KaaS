@@ -26,24 +26,16 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 func kaas(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-
-		client := github.NewClient(nil)
-
-		taglist, _, err := client.Repositories.ListTags(context.Background(), "poseidon", "typhoon", nil)
+		versions, err := checkversions()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		var supported SupportedVersions
-		for _, tag := range taglist {
-			supported.Versions = append(supported.Versions, tag.GetName())
-		}
-		err = json.NewEncoder(w).Encode(supported.Versions)
+		err = json.NewEncoder(w).Encode(versions.Versions)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		return
 	case "POST":
 		user := User{}
@@ -52,10 +44,19 @@ func kaas(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 		}
+		supported, err := checkversions()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if stringInSlice(user.Version, supported.Versions) {
+			http.StatusText(200)
+			fmt.Println("found")
 
-		log.Println("result")
-
-		http.StatusText(200)
+		} else {
+			fmt.Println("not found")
+			http.StatusText(400)
+		}
 
 	default:
 		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
@@ -72,4 +73,30 @@ func main() {
 	if err = http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func checkversions() (SupportedVersions, error) {
+	client := github.NewClient(nil)
+
+	taglist, _, err := client.Repositories.ListTags(context.Background(), "poseidon", "typhoon", nil)
+	if err != nil {
+		return SupportedVersions{}, err
+	}
+	var supported SupportedVersions
+	for _, tag := range taglist {
+		supported.Versions = append(supported.Versions, tag.GetName())
+	}
+	if err != nil {
+		return SupportedVersions{}, err
+	}
+	return supported, nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
