@@ -1,13 +1,11 @@
 module "cluster" {
-  source = "git::https://github.com/poseidon/typhoon//digital-ocean/container-linux/kubernetes?ref=v1.17.4"
+  source = "git::https://github.com/poseidon/typhoon//digital-ocean/container-linux/kubernetes?ref=CLUSTER_VERSION"
 
   # Digital Ocean
-  cluster_name = "seventeen"
+  cluster_name = var.cluster_name
   region       = "nyc3"
   dns_zone     = "k8stfw.com"
   image        = "coreos-stable"
-  # controller_type = "s-4vcpu-8gb"
-  # worker_type     = "s-2vcpu-2gb"
 
   # configuration
   ssh_fingerprints = [var.ssh_fingerprint]

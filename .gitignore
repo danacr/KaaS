@@ -2,3 +2,4 @@ tf/.terraform*
 tf/terraform.*
 tf/cluster-config
 service-account-key.json
+do_token
