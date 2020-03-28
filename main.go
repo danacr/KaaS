@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
-	"github.com/tidwall/gjson"
+	"github.com/google/go-github/v30/github"
 )
 
 // User struct
@@ -16,7 +16,7 @@ type User struct {
 	PubKey  string
 }
 type SupportedVersions struct {
-	Array []string
+	Versions []string
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,36 +26,31 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 func kaas(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		resp, err := http.Get("https://api.github.com/repos/poseidon/typhoon/tags")
+
+		client := github.NewClient(nil)
+
+		taglist, _, err := client.Repositories.ListTags(context.Background(), "poseidon", "typhoon", nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		defer resp.Body.Close()
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
+		var supported SupportedVersions
+		for _, tag := range taglist {
+			supported.Versions = append(supported.Versions, tag.GetName())
 		}
-		bodyString := string(bodyBytes)
-		value := gjson.Get(bodyString, "#.name")
-		versions := value.Array()
-		js, err := json.Marshal(versions)
+		err = json.NewEncoder(w).Encode(supported.Versions)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_, err = w.Write(js)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
 		return
 	case "POST":
 		user := User{}
 		err := json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+
 		}
 
 		log.Println("result")
