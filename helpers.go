@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"os"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/google/go-github/v30/github"
@@ -40,38 +39,28 @@ func stringInSlice(a string, list []string) bool {
 	}
 	return false
 }
-func cfgencrypt(key string, fileToEnc string) error {
+func cfgencrypt(key string, cfg []byte) (string, error) {
 	// Read in public key
 	decoded, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	recipient, err := readEntity(decoded)
 	if err != nil {
-		return err
+		return "", err
 	}
+	c := bytes.NewBuffer(cfg)
+	var ecfg []byte
+	ec := bytes.NewBuffer(ecfg)
 
-	f, err := os.Open(fileToEnc)
+	err = encrypt([]*openpgp.Entity{recipient}, nil, c, ec)
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer f.Close()
+	encoded := base64.StdEncoding.EncodeToString(ec.Bytes())
 
-	dst, err := os.Create(fileToEnc + ".gpg")
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-	err = encrypt([]*openpgp.Entity{recipient}, nil, f, dst)
-	if err != nil {
-		return err
-	}
-	err = os.Remove(fileToEnc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return encoded, nil
 }
 func encrypt(recip []*openpgp.Entity, signer *openpgp.Entity, r io.Reader, w io.Writer) error {
 	wc, err := openpgp.Encrypt(w, recip, signer, &openpgp.FileHints{IsBinary: true}, nil)

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -22,6 +22,7 @@ type User struct {
 // Cluster struct
 type Cluster struct {
 	Creation time.Time
+	Cfg      string
 	Ready    bool
 	Version  string
 }
@@ -68,7 +69,7 @@ func kaas(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			fmt.Fprintf(w, id)
+			fmt.Fprint(w, id)
 		} else {
 			fmt.Fprintf(w, "Unsupported version")
 		}
@@ -159,26 +160,20 @@ func clusterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(datastring))
+	fmt.Fprint(w, string(datastring))
 
 }
 
 func terraformcluster(id string, user User) error {
-	f, err := os.Create("static/" + id)
-	if err != nil {
-		return err
-	}
-	_, err = f.WriteString("Hello World")
+	var cfg bytes.Buffer
+
+	_, err := cfg.WriteString("Hello World")
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = f.Close()
-	if err != nil {
-		return err
-	}
 
-	err = cfgencrypt(user.PubKey, "static/"+id)
+	encryptedcfg, err := cfgencrypt(user.PubKey, cfg.Bytes())
 	if err != nil {
 		return err
 	}
@@ -189,9 +184,10 @@ func terraformcluster(id string, user User) error {
 	}
 	collection := client.Collection("Clusters")
 	document := collection.Doc(id)
-	wr, err := document.Create(ctx, Cluster{
-		Ready: true,
-	})
+	wr, err := document.Update(ctx, []firestore.Update{{Path: "Ready", Value: true}, {Path: "Cfg", Value: encryptedcfg}})
+	if err != nil {
+		return err
+	}
 	fmt.Println(wr)
 	return nil
 }

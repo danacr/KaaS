@@ -14,4 +14,6 @@ Test:
 
 ```sh
 curl localhost:8080/get|jq
+
+bash test2.sh|jq -r .Cfg|base64 -D|gpg --decrypt
 ```
