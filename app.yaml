@@ -7,4 +7,3 @@ handlers:
     redirect_http_response_code: 301
 
 env_variables:
-  GOOGLE_APPLICATION_CREDENTIALS: "service-account-key.json"

@@ -26,3 +26,4 @@
 tf/.terraform*
 tf/terraform.*
 tf/cluster-config
+test/
