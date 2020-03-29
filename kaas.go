@@ -15,7 +15,7 @@ type Cluster struct {
 	Version string
 	PubKey  string
 	ID      string
-	Minutes int
+	Minutes string
 	Region  string
 	Cfg     string
 }
@@ -58,12 +58,15 @@ func kaas(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			cluster.ID = id.String()
+			cluster.Minutes = "30"
+			cluster.Region = "nyc3"
+			cluster.Cfg = "https://storage.googleapis.com/" + cluster.ID + "/cluster-config.gpg"
+
 			err = createcluster(cluster)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			cluster.Cfg = "https://storage.googleapis.com/" + cluster.ID + "/cluster-config.gpg"
 
 			js, err := json.Marshal(cluster.Cfg)
 			if err != nil {
