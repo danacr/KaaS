@@ -10,5 +10,5 @@ Current configuration:
 
 ```yaml
 region: nyc3
-minutes: 30
+minutes: 120
 ```

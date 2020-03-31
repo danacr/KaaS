@@ -58,7 +58,7 @@ func kaas(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			cluster.ID = id.String()
-			cluster.Minutes = "30"
+			cluster.Minutes = "120"
 			cluster.Region = "nyc3"
 			cluster.Cfg = "https://storage.googleapis.com/" + cluster.ID + "/cluster-config.gpg"
 
