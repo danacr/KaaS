@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -114,11 +114,11 @@ func createcluster(cluster Cluster) error {
 		},
 	}
 	// Create Job
-	fmt.Println("Creating job...")
+	log.Println("Creating job...")
 	result, err := jobsClient.Create(context.TODO(), job, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Created job %q.\n", result.GetObjectMeta().GetName())
+	log.Printf("Created job %q.\n", result.GetObjectMeta().GetName())
 	return nil
 }
